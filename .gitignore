@@ -6,3 +6,4 @@ backend/cert.pem
 reports_*/
 .DS_Store
 .env
+node_modules/

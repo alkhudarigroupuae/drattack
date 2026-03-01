@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.db
+backend/key.pem
+backend/cert.pem
+reports_*/
+.DS_Store
+.env

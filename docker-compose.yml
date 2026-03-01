@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # الخدمة الأولى: لوحة القيادة والتقارير
+  dashboard:
+    build: .
+    container_name: cyber_dashboard
+    command: streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    restart: always
+
+  # الخدمة الثانية: المراقبة الحية
+  monitor:
+    build: .
+    container_name: cyber_monitor
+    command: streamlit run live_monitor.py --server.port=8502 --server.address=0.0.0.0
+    ports:
+      - "8502:8502"
+    volumes:
+      - .:/app
+    restart: always

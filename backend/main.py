@@ -7,6 +7,7 @@ import logging
 import psutil
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -513,6 +514,16 @@ async def websocket_endpoint(websocket: WebSocket):
         telemetry_subscribers.remove(websocket)
         log_subscribers.remove(websocket)
         inspector_subscribers.remove(websocket)
+
+# --- Static Files (Frontend) ---
+# Try to find frontend directory relative to this file or root
+frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+else:
+    # Fallback if running from root
+    if os.path.exists("frontend"):
+        app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,5 +1,8 @@
+fastapi
+uvicorn
+aiohttp
+psutil
 requests
 pandas
-streamlit
-flask
-locust
+pydantic
+websockets

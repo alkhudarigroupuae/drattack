@@ -25,42 +25,48 @@ VPS_IP = "76.13.179.65"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("CyberBackend")
 
-# --- Database Initialization ---
+# --- Database Initialization (Optimized for Serverless) ---
+DB_NAME = "/tmp/cyber_operations.db" # Use /tmp for writable filesystem in serverless
+
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS campaigns (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            target_url TEXT NOT NULL,
-            mode TEXT DEFAULT 'standard',
-            concurrency INTEGER,
-            duration INTEGER,
-            start_time TIMESTAMP,
-            end_time TIMESTAMP,
-            status TEXT DEFAULT 'Running',
-            total_requests INTEGER DEFAULT 0,
-            success_count INTEGER DEFAULT 0,
-            fail_count INTEGER DEFAULT 0,
-            avg_rps REAL DEFAULT 0.0,
-            bytes_received INTEGER DEFAULT 0
-        )
-    ''')
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS telemetry (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            campaign_id INTEGER,
-            timestamp TIMESTAMP,
-            requests INTEGER,
-            success INTEGER,
-            failed INTEGER,
-            rps REAL,
-            latency_avg REAL,
-            FOREIGN KEY(campaign_id) REFERENCES campaigns(id)
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        # ... (Schema creation) ...
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target_url TEXT NOT NULL,
+                mode TEXT DEFAULT 'standard',
+                concurrency INTEGER,
+                duration INTEGER,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                status TEXT DEFAULT 'Running',
+                total_requests INTEGER DEFAULT 0,
+                success_count INTEGER DEFAULT 0,
+                fail_count INTEGER DEFAULT 0,
+                avg_rps REAL DEFAULT 0.0,
+                bytes_received INTEGER DEFAULT 0
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS telemetry (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id INTEGER,
+                timestamp TIMESTAMP,
+                requests INTEGER,
+                success INTEGER,
+                failed INTEGER,
+                rps REAL,
+                latency_avg REAL,
+                FOREIGN KEY(campaign_id) REFERENCES campaigns(id)
+            )
+        ''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"DB Init Error: {e}")
 
 init_db()
 
@@ -359,16 +365,12 @@ class AttackEngine:
             "bytes": self.stats["bytes"]
         }
         
-        try:
-            conn = sqlite3.connect(DB_NAME)
-            conn.execute('''
-                INSERT INTO telemetry (campaign_id, timestamp, requests, success, failed, rps, latency_avg)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (self.campaign_id, datetime.now(), self.stats["requests"], self.stats["success"], self.stats["failed"], rps, 0))
-            conn.commit()
-            conn.close()
-        except:
-            pass
+        # Telemetry to DB disabled for performance in Serverless
+        # try:
+        #     conn = sqlite3.connect(DB_NAME)
+        #     conn.execute(...)
+        # except:
+        #     pass
         
         message = json.dumps({"type": "telemetry", "data": telemetry})
         for ws in telemetry_subscribers:
@@ -378,17 +380,11 @@ class AttackEngine:
                 pass
 
     def update_db_status(self, status):
-        try:
-            conn = sqlite3.connect(DB_NAME)
-            conn.execute("UPDATE campaigns SET status=?, end_time=? WHERE id=?", (status, datetime.now(), self.campaign_id))
-            conn.commit()
-            conn.close()
-        except:
-            pass
+        pass # Disabled DB updates for high-speed attack in serverless to prevent locks
 
     def stop(self):
         self.is_running = False
-        self.update_db_status("Aborted")
+        # self.update_db_status("Aborted")
 
 # --- API Endpoints ---
 

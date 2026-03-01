@@ -23,6 +23,17 @@
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-200 font-sans">
 
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-xl max-w-md w-full text-center border-t-4 border-sky-600 shadow-2xl">
+            <h1 class="text-2xl font-bold text-sky-400 glow-text mb-2">ACCESS RESTRICTED</h1>
+            <p class="text-slate-400 text-sm mb-6">Enter access code to continue.</p>
+            <input type="password" id="accessCode" class="w-full bg-slate-800 border border-slate-600 rounded p-3 text-white text-center focus:border-sky-500 outline-none transition-colors mb-4" placeholder="••••••••">
+            <button onclick="checkAccess()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded transition-all">UNLOCK SYSTEM</button>
+            <p id="loginError" class="text-red-400 text-xs mt-3 hidden">Access Denied. Invalid Code.</p>
+        </div>
+    </div>
+
     <!-- Security Warning Banner -->
     <div class="bg-red-900/90 text-red-200 text-center py-2 text-xs font-bold border-b border-red-700 animate-pulse">
         ⚠️ CONFIDENTIAL: AUTHORIZED USE ONLY. DO NOT SHARE. FOR EDUCATIONAL TESTING 100%. (سري للغاية: للاستخدام المصرح به فقط. لا تشارك. للاختبار التعليمي 100%)
@@ -230,6 +241,24 @@
     </div>
 
     <script>
+        // Access Control
+        function checkAccess() {
+            const code = document.getElementById('accessCode').value;
+            if (code === "Maher100%") {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                localStorage.setItem('drattack_auth', 'true');
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        // Check on Load
+        window.onload = () => {
+            if (localStorage.getItem('drattack_auth') === 'true') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+            }
+        };
+
         function showTacticalInfo() {
             document.getElementById('tacticalModal').classList.remove('hidden');
         }

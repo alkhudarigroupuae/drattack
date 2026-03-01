@@ -273,6 +273,10 @@
             ? "ws://76.13.179.65:8000/ws/telemetry"
             : (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + "/ws/telemetry";
         
+        console.log("Detected API_BASE:", API_BASE);
+        console.log("Detected WS_URL:", WS_URL);
+
+        
         // Chart Setup
         Chart.defaults.color = '#64748b';
         Chart.defaults.borderColor = '#334155';
@@ -451,11 +455,14 @@
             const target = document.getElementById('targetUrl').value;
             log(`Testing connectivity to ${target}...`, "info");
             try {
-                const res = await fetch(`${API_BASE}/api/verify`, {
+                // Ensure API_BASE does not have a trailing slash if we append /api/verify
+                const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+                const res = await fetch(`${baseUrl}/api/verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ target_url: target })
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const data = await res.json();
                 if (data.status === "online") {
                     let details = `Target is ONLINE (HTTP ${data.code}) - ${data.latency}ms`;
@@ -479,6 +486,7 @@
                 }
             } catch (e) {
                 log("Verification Failed: " + e.message, "error");
+                console.error("Fetch Error:", e);
             }
         }
 

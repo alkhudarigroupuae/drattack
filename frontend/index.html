@@ -18,24 +18,19 @@
         .log-warning { color: #facc15; }
         .log-error { color: #f87171; }
 
-        /* Snake Animation */
-        @keyframes snake-bite {
-            0% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.1) rotate(-5deg); }
-            50% { transform: scale(1.2) rotate(5deg); }
-            75% { transform: scale(1.1) rotate(-5deg); }
-            100% { transform: scale(1) rotate(0deg); }
-        }
-        .snake-active { animation: snake-bite 0.5s infinite; filter: drop-shadow(0 0 10px #ef4444); }
-        .snake-idle { opacity: 0.3; filter: grayscale(100%); transition: all 0.5s; }
+        /* Snake Animation - REMOVED */
     </style>
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-200 font-sans">
 
+    <!-- Security Warning Banner -->
+    <div class="bg-red-900/90 text-red-200 text-center py-2 text-xs font-bold border-b border-red-700 animate-pulse">
+        ⚠️ CONFIDENTIAL: AUTHORIZED USE ONLY. DO NOT SHARE. FOR EDUCATIONAL TESTING 100%. (سري للغاية: للاستخدام المصرح به فقط. لا تشارك. للاختبار التعليمي 100%)
+    </div>
+
     <!-- Header -->
     <header class="bg-slate-900 border-b border-slate-700 p-4 flex flex-col md:flex-row justify-between items-center shadow-md z-10 sticky top-0">
         <div class="flex items-center gap-3 mb-2 md:mb-0">
-            <div id="snakeIcon" class="text-3xl snake-idle">🐍</div>
             <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <h1 class="text-xl md:text-2xl font-bold text-sky-400 glow-text tracking-wider">STRATEGIC CYBER COMMAND</h1>
         </div>
@@ -62,9 +57,9 @@
                 
                 <div class="flex flex-col gap-4">
                     <div>
-                        <label class="text-xs font-bold text-slate-400">TARGET URL</label>
+                        <label class="text-xs font-bold text-slate-400">TARGET URL OR SERVER IP</label>
                         <div class="flex gap-2 mt-1">
-                            <input type="text" id="targetUrl" value="https://salparts.com" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-white focus:border-sky-500 outline-none transition-colors">
+                            <input type="text" id="targetUrl" placeholder="https://example.com" class="flex-1 bg-slate-800 border border-slate-600 rounded p-2 text-white focus:border-sky-500 outline-none transition-colors">
                             <button onclick="verifyTarget()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded text-xs font-bold border border-slate-600" title="Check Connectivity">
                                 🔍 TEST
                             </button>
@@ -99,7 +94,16 @@
                     </div>
 
                     <div class="flex gap-2 mt-4">
-                        <button id="launchBtn" onclick="startCampaign()" class="flex-1 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold py-3 rounded transition-all shadow-lg shadow-red-900/40 border border-red-500 opacity-50 cursor-not-allowed">
+                        <div class="w-full mb-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="confirmBox" onchange="toggleLaunch()" class="w-4 h-4 bg-slate-800 border border-slate-600 rounded">
+                                <span class="text-[10px] text-slate-400">I confirm this is for AUTHORIZED EDUCATIONAL TESTING only. (أؤكد أن هذا للاختبار التعليمي المصرح به فقط)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="launchBtn" onclick="startCampaign()" disabled class="flex-1 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold py-3 rounded transition-all shadow-lg shadow-red-900/40 border border-red-500 opacity-50 cursor-not-allowed">
                             🚀 LAUNCH ATTACK
                         </button>
                         <button onclick="stopCampaign()" class="w-1/4 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded transition-all border border-slate-600">
@@ -126,6 +130,19 @@
         <div class="w-full lg:w-2/3 flex flex-col gap-6 z-10">
             
             <!-- KPIs -->
+            <div class="glass-panel p-4 rounded-xl border-l-4 border-sky-500 mb-2">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold text-slate-400">TARGET HEALTH (FALLEN DOWN %)</span>
+                    <span id="healthPercent" class="text-xs font-bold text-red-400">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-4 overflow-hidden relative">
+                    <div id="healthBar" class="bg-gradient-to-r from-green-500 to-red-600 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-[9px] font-bold text-white drop-shadow-md">
+                        IMPACT STATUS
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="glass-panel p-4 rounded-xl border-l-4 border-sky-500">
                     <div class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Throughput</div>
@@ -258,17 +275,28 @@
             }
         });
 
+        // Logic to toggle launch button
+        function toggleLaunch() {
+            const btn = document.getElementById('launchBtn');
+            const chk = document.getElementById('confirmBox');
+            if (chk.checked && ws && ws.readyState === WebSocket.OPEN) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('animate-pulse', 'ring-4', 'ring-red-500');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.classList.remove('animate-pulse', 'ring-4', 'ring-red-500');
+            }
+        }
+
         // WebSocket Connection
         let ws;
         function connectWS() {
             ws = new WebSocket(WS_URL);
             ws.onopen = () => {
                 log("WebSocket Connected.", "success");
-                // Enable and Flash Launch Button
-                const btn = document.getElementById('launchBtn');
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                btn.classList.add('animate-pulse', 'ring-4', 'ring-red-500');
-                setTimeout(() => btn.classList.remove('ring-4', 'ring-red-500'), 2000); // Stop ring after 2s
+                toggleLaunch(); // Check if box is already checked
             };
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
@@ -282,10 +310,7 @@
             };
             ws.onclose = () => {
                 log("WebSocket Disconnected. Reconnecting...", "warning");
-                // Disable Button
-                const btn = document.getElementById('launchBtn');
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.classList.remove('animate-pulse');
+                toggleLaunch(); // Disable button
                 setTimeout(connectWS, 2000);
             };
         }
@@ -296,6 +321,26 @@
             document.getElementById('failedReq').innerText = data.failed.toLocaleString();
             document.getElementById('dataReq').innerText = (data.bytes / (1024*1024)).toFixed(2);
             
+            // Calculate Health (Fallen Down %)
+            // Logic: If failed requests > 10% or latency > 2000ms, impact increases
+            let impact = 0;
+            if (data.requests > 0) {
+                const failRate = (data.failed / data.requests) * 100;
+                // Simple heuristic for demo purposes
+                impact = Math.min(100, (failRate * 2) + (data.rps / 100));
+            }
+            
+            const bar = document.getElementById('healthBar');
+            const pct = document.getElementById('healthPercent');
+            
+            bar.style.width = `${impact}%`;
+            pct.innerText = `${Math.round(impact)}%`;
+            
+            // Color shift based on impact
+            if (impact < 30) bar.className = "bg-green-500 h-4 rounded-full transition-all duration-500";
+            else if (impact < 70) bar.className = "bg-yellow-500 h-4 rounded-full transition-all duration-500";
+            else bar.className = "bg-red-600 h-4 rounded-full transition-all duration-500 animate-pulse";
+
             // Update Chart
             const now = new Date().toLocaleTimeString();
             if (trafficChart.data.labels.length > 60) { // Keep last 60 seconds
@@ -331,7 +376,7 @@
                         <span class="text-slate-500">${data.timestamp} | ${data.latency}</span>
                     </div>
                 </div>
-                <div class="font-bold text-xs px-2 py-1 rounded border border-current opacity-80">
+                <div class="font-bold text-xs px-2 py-1 rounded border border-current opacity-80" title="${getStatusDesc(data.status)}">
                     HTTP ${data.status}
                 </div>
             `;
@@ -341,6 +386,21 @@
                 container.removeChild(container.lastChild);
             }
             container.prepend(entry);
+        }
+
+        // Helper: Status Code Descriptions (Bilingual)
+        function getStatusDesc(code) {
+            const descriptions = {
+                200: "OK / Success (نجاح)",
+                403: "Forbidden / Blocked (تم الحظر - WAF)",
+                404: "Not Found (غير موجود)",
+                429: "Rate Limited (تجاوز الحد المسموح)",
+                500: "Server Error (خطأ في السيرفر - CRASHED)",
+                502: "Bad Gateway (بوابة سيئة - DOWN)",
+                503: "Service Unavailable (الخدمة غير متاحة - OFF)",
+                504: "Gateway Timeout (انتهى الوقت - SLOW)"
+            };
+            return descriptions[code] || "Unknown Status (حالة غير معروفة)";
         }
 
         // API Controls
@@ -407,10 +467,7 @@
                     document.getElementById('opStatus').innerText = "RUNNING";
                     document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-green-900 text-green-200 animate-pulse";
                     
-                    // Activate Snake
-                    const snake = document.getElementById('snakeIcon');
-                    snake.classList.remove('snake-idle');
-                    snake.classList.add('snake-active');
+                    // Activate Snake - REMOVED
                     
                     log(`Launched in ${mode.toUpperCase()} mode.`, "success");
                 } else {
@@ -429,10 +486,7 @@
             document.getElementById('opStatus').innerText = "STOPPED";
             document.getElementById('opStatus').className = "text-xs py-1 px-2 rounded bg-slate-800 text-slate-400";
             
-            // Deactivate Snake
-            const snake = document.getElementById('snakeIcon');
-            snake.classList.remove('snake-active');
-            snake.classList.add('snake-idle');
+            // Deactivate Snake - REMOVED
         }
 
         async function resetDashboard() {

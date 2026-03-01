@@ -263,8 +263,15 @@
             document.getElementById('tacticalModal').classList.remove('hidden');
         }
 
-        const API_BASE = "http://76.13.179.65:8000";
-        const WS_URL = "ws://76.13.179.65:8000/ws/telemetry";
+        // AUTO-DETECT API BASE URL
+        // If we are on Vercel/Render, use current origin. If local, use localhost:8000
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? "http://76.13.179.65:8000" 
+            : window.location.origin;
+            
+        const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? "ws://76.13.179.65:8000/ws/telemetry"
+            : (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + "/ws/telemetry";
         
         // Chart Setup
         Chart.defaults.color = '#64748b';
